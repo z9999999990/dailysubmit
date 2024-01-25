@@ -1,3 +1,3 @@
-module github.com/z9999999990/dailysubmit
+module dailysubmit
 
-go 1.18
+go 1.21.0

@@ -1,10 +1,10 @@
 package main
 
 import (
-	ba64 "one/ba64"
+	ba64 "dailysubmit/one"
 )
 
 func main() {
-	//ba64.Ba64En()
-	ba64.Ba64De()
+	ba64.Ba64()
+
 }
