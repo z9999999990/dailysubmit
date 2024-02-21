@@ -1,10 +1,12 @@
 package main
 
 import (
-	ba64 "dailysubmit/base64"
+	//one "dailysubmit/base64"
+	varints "dailysubmit/varints"
 )
 
 func main() {
-	ba64.Ba64()
+	//one.Ba64()
+	varints.Vints()
 
 }
