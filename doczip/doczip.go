@@ -5,28 +5,35 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
-func getfiles(path string, w io.Writer) {
+func getfiles(path string, zipwriter *zip.Writer) {
 	files, _ := os.ReadDir(path)
 	for _, file := range files {
+		filepath := filepath.Join(path, file.Name())
+
 		if file.IsDir() {
-			getfiles(path + "/" + file.Name())
+			getfiles(filepath, zipwriter)
 		} else {
-			f, err := os.Open(file.Name())
+			f, err := os.Open(filepath)
 			if err != nil {
 				fmt.Printf("openfile err: %s", err)
 			}
 			defer f.Close()
+
+			w, err := zipwriter.Create(file.Name())
+			if err != nil {
+				fmt.Printf("create error: %s", err)
+			}
 
 			if _, err := io.Copy(w, f); err != nil {
 				fmt.Printf("close error:%s", err)
 			}
 		}
 	}
-}
 
-func zipab() {}
+}
 
 func main() {
 
@@ -39,11 +46,8 @@ func main() {
 	defer zipfile.Close()
 
 	zipwriter := zip.NewWriter(zipfile)
-	w, err := zipwriter.Create("ziptest.txt")
-	if err != nil {
-		fmt.Printf("create error: %s", err)
-	}
+	defer zipwriter.Close()
 
-	getfiles(".", w)
-	zipwriter.Close()
+	path := args[1]
+	getfiles(path, zipwriter)
 }
