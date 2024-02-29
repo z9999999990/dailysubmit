@@ -22,7 +22,7 @@ func getfiles(path string, zipwriter *zip.Writer) {
 			}
 			defer f.Close()
 
-			w, err := zipwriter.Create(file.Name())
+			w, err := zipwriter.Create(filepath)
 			if err != nil {
 				fmt.Printf("create error: %s", err)
 			}
