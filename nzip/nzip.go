@@ -8,40 +8,44 @@ import (
 	"path/filepath"
 )
 
-func getfiles(zipfile *zip.ReadCloser, path string) {
-	for _, file := range zipfile.File {
-		filepath := filepath.Join(path, file.Name)
+func unzipfiles(zipfile *zip.ReadCloser, path string) error {
 
-		if file.FileInfo().IsDir() {
-			_ = os.MkdirAll(filepath, os.ModePerm)
-			continue
+	for _, file := range zipfile.File {
+		fpath := filepath.Join(path, file.Name)
+
+		if err := os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
+			return err
 		} else {
-			w, err := os.Create(filepath)
+
+			w, err := os.Create(fpath)
 			if err != nil {
 				fmt.Printf("create error: %s", err)
-				continue
+				return err
 			}
 			defer w.Close()
 
-			f, err := zipfile.Open(file.Name)
+			f, err := file.Open()
 			if err != nil {
 				fmt.Printf("openfile err: %s", err)
-				continue
+				return err
 			}
 			defer f.Close()
 
 			if _, err := io.Copy(w, f); err != nil {
 				fmt.Printf("copy error:%s", err)
+				return err
 			}
 		}
-
 	}
+
+	return nil
 }
 
 func main() {
+
 	args := os.Args[1:]
 	if len(args) < 2 {
-		fmt.Println("Usage: program <zipfile> <outputpath>")
+		fmt.Println("Usage: program <zipfile> <outputfile>")
 		return
 	}
 
@@ -53,6 +57,10 @@ func main() {
 	defer zipfile.Close()
 
 	path := args[1]
+	if err := unzipfiles(zipfile, path); err != nil {
+		fmt.Printf("unzip faild: %s\n", err)
+		return
+	}
 
-	getfiles(zipfile, path)
+	fmt.Println("unzip success!")
 }
