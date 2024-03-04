@@ -8,6 +8,27 @@ import (
 	"path/filepath"
 )
 
+func nmkfile(filepath string, zipwriter *zip.Writer) error {
+	f, err := os.Open(filepath)
+	if err != nil {
+		fmt.Printf("openfile err: %s", err)
+		return err
+	}
+	defer f.Close()
+
+	w, err := zipwriter.Create(filepath)
+	if err != nil {
+		fmt.Printf("create error: %s", err)
+		return err
+	}
+
+	if _, err := io.Copy(w, f); err != nil {
+		fmt.Printf("close error:%s", err)
+		return err
+	}
+	return nil
+}
+
 func getfiles(path string, zipwriter *zip.Writer) error {
 
 	files, _ := os.ReadDir(path)
@@ -17,21 +38,7 @@ func getfiles(path string, zipwriter *zip.Writer) error {
 		if file.IsDir() {
 			getfiles(filepath, zipwriter)
 		} else {
-			f, err := os.Open(filepath)
-			if err != nil {
-				fmt.Printf("openfile err: %s", err)
-				return err
-			}
-			defer f.Close()
-
-			w, err := zipwriter.Create(filepath)
-			if err != nil {
-				fmt.Printf("create error: %s", err)
-				return err
-			}
-
-			if _, err := io.Copy(w, f); err != nil {
-				fmt.Printf("close error:%s", err)
+			if err := nmkfile(filepath, zipwriter); err != nil {
 				return err
 			}
 		}
@@ -59,6 +66,28 @@ func nzip(args []string) {
 	fmt.Println("nzip success!")
 }
 
+func umkfile(fpath string, file *zip.File) error {
+	w, err := os.Create(fpath)
+	if err != nil {
+		fmt.Printf("create error: %s", err)
+		return err
+	}
+	defer w.Close()
+
+	f, err := file.Open()
+	if err != nil {
+		fmt.Printf("openfile err: %s", err)
+		return err
+	}
+	defer f.Close()
+
+	if _, err := io.Copy(w, f); err != nil {
+		fmt.Printf("copy error:%s", err)
+		return err
+	}
+	return nil
+}
+
 func unzipfiles(zipfile *zip.ReadCloser, path string) error {
 
 	for _, file := range zipfile.File {
@@ -70,26 +99,10 @@ func unzipfiles(zipfile *zip.ReadCloser, path string) error {
 
 		if err := os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
 			return err
-		} else {
+		}
 
-			w, err := os.Create(fpath)
-			if err != nil {
-				fmt.Printf("create error: %s", err)
-				return err
-			}
-			defer w.Close()
-
-			f, err := file.Open()
-			if err != nil {
-				fmt.Printf("openfile err: %s", err)
-				return err
-			}
-			defer f.Close()
-
-			if _, err := io.Copy(w, f); err != nil {
-				fmt.Printf("copy error:%s", err)
-				return err
-			}
+		if err := umkfile(fpath, file); err != nil {
+			return err
 		}
 	}
 
